@@ -1,5 +1,8 @@
 name: Android APK
 
+# Builds the unofficial Android port from the `android` branch and
+# publishes the APK as the `android-latest` pre-release of this fork.
+
 on:
   push:
     branches: [android]
@@ -12,10 +15,105 @@ concurrency:
   group: android-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # `debug` compiles much faster and is what the port is iterated on;
+  # `release` is what gets installed.
+  PROFILE: debug
+  TAURI_APP_PATH: ${{ github.workspace }}/src-tauri/crates/app
+  TAURI_FRONTEND_PATH: ${{ github.workspace }}
+  CARGO_TERM_COLOR: never
+
 jobs:
-  probe:
+  apk:
     runs-on: ubuntu-latest
+    timeout-minutes: 150
     steps:
-      - run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"; ls "$ANDROID_HOME"; ls "$ANDROID_HOME/ndk" || true
-          echo "NDK latest: $ANDROID_NDK_LATEST_HOME"; ls "$ANDROID_HOME/build-tools"; java -version; nproc; free -g; df -h /
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Android NDK
+        run: |
+          ndk="$ANDROID_HOME/ndk/27.3.13750724"
+          test -d "$ndk" || ndk="$ANDROID_NDK_LATEST_HOME"
+          echo "NDK_HOME=$ndk" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_HOME=$ndk" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_ROOT=$ndk" >> "$GITHUB_ENV"
+
+      - name: Rust toolchain
+        working-directory: src-tauri
+        run: |
+          rustup show
+          rustup target add aarch64-linux-android
+          rustc --version
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+          key: android-${{ env.PROFILE }}
+          cache-on-failure: true
+
+      - name: Frontend
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+
+      - name: Generate the Android project
+        run: |
+          bunx tauri android init --ci
+          bunx tauri icon src-tauri/crates/app/icons/icon.png
+          python3 src-tauri/crates/app/android/apply_overlay.py src-tauri/crates/app/gen/android
+          echo "::group::AndroidManifest.xml"
+          cat src-tauri/crates/app/gen/android/app/src/main/AndroidManifest.xml
+          echo "::endgroup::"
+          echo "::group::app/build.gradle.kts"
+          cat src-tauri/crates/app/gen/android/app/build.gradle.kts
+          echo "::endgroup::"
+          echo "::group::generated sources"
+          find src-tauri/crates/app/gen/android -name '*.kt' -o -name '*.pro' -o -name '*.properties' | grep -v /build/ | sort
+          echo "::endgroup::"
+
+      - name: Build
+        run: |
+          flag=""
+          if [ "$PROFILE" = "debug" ]; then flag="--debug"; fi
+          bunx tauri android build --apk --target aarch64 --ci $flag
+
+      - name: Sign
+        run: |
+          tools="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          apk="$(find src-tauri/crates/app/gen/android/app/build/outputs/apk -name '*.apk' | head -1)"
+          test -n "$apk"
+          "$tools/zipalign" -f -p 4 "$apk" aligned.apk
+          "$tools/apksigner" sign \
+            --ks src-tauri/crates/app/android/sideload.keystore \
+            --ks-key-alias waveflow \
+            --ks-pass pass:waveflow-sideload \
+            --out WaveFlow-android-arm64.apk aligned.apk
+          "$tools/apksigner" verify --print-certs WaveFlow-android-arm64.apk | head -3
+          "$tools/aapt2" dump badging WaveFlow-android-arm64.apk | head -30
+          ls -la WaveFlow-android-arm64.apk
+          unzip -l WaveFlow-android-arm64.apk | grep -E '\.so$|classes.*dex' || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WaveFlow-android-arm64-${{ env.PROFILE }}
+          path: WaveFlow-android-arm64.apk
+
+      - name: Publish as the android-latest pre-release
+        if: env.PROFILE == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete android-latest --yes --cleanup-tag || true
+          gh release create android-latest WaveFlow-android-arm64.apk \
+            --target "$GITHUB_SHA" --prerelease \
+            --title "WaveFlow for Android (unofficial port)" \
+            --notes "Unofficial Android port of WaveFlow ${GITHUB_SHA::7}, built from the android branch of this fork. 64-bit ARM devices, Android 8.0 or later. Not affiliated with the WaveFlow project."

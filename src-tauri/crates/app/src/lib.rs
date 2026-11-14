@@ -6,20 +6,26 @@
 
 mod adwaita_frame;
 mod analysis;
+#[cfg(target_os = "android")]
+mod android;
 mod audio;
 mod autoplay;
 mod backup;
 mod backup_prompt;
 mod commands;
 mod db;
+#[cfg_attr(target_os = "android", path = "android/desktop_lyrics.rs")]
 mod desktop_lyrics;
+#[cfg_attr(target_os = "android", path = "android/discord_presence.rs")]
 mod discord_presence;
 mod display_backend;
 mod dlna;
 mod error;
 mod external_open;
+#[cfg_attr(target_os = "android", path = "android/global_shortcuts.rs")]
 mod global_shortcuts;
 mod logging;
+#[cfg_attr(target_os = "android", path = "android/media_controls.rs")]
 mod media_controls;
 #[cfg(target_os = "linux")]
 mod media_loopback;
@@ -67,6 +73,7 @@ mod tasks;
 #[path = "sync_stub.rs"]
 mod sync;
 mod thumbnails;
+#[cfg_attr(target_os = "android", path = "android/trash.rs")]
 mod trash;
 mod watcher;
 mod webview_memory;
@@ -92,6 +99,11 @@ pub fn run() {
     // A copy of this binary started only to ask whether to migrate
     // without a backup shows that dialog and exits here, before it can
     // touch a file or a toolkit (see `backup_prompt`).
+    // Android hands a process neither `HOME` nor a writable temp
+    // directory; everything below resolves paths from them.
+    #[cfg(target_os = "android")]
+    android::prepare_process_env();
+
     backup_prompt::answer_if_asked();
 
     // Initialize structured logging. `RUST_LOG` overrides the default
@@ -177,7 +189,12 @@ pub fn run() {
     // `mut` is only consumed when the updater plugin is wired in (release
     // builds); the lint would fire in debug otherwise.
     #[allow(unused_mut)]
-    let mut builder = tauri::Builder::default()
+    let mut builder = tauri::Builder::default();
+    // Android runs one activity per app and starts nothing at boot, so
+    // neither plugin has a backend there.
+    #[cfg(not(target_os = "android"))]
+    {
+        builder = builder
         // Single-instance MUST be the first plugin so a second launch
         // exits cleanly before any heavy init (pool open, audio engine,
         // tray, watchers) runs in the duplicate process.
@@ -191,7 +208,9 @@ pub fn run() {
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(vec!["--minimized"]),
-        ))
+        ));
+    }
+    builder = builder
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init());
@@ -200,6 +219,7 @@ pub fn run() {
     // a Wayland session, which goes through the portal instead — because
     // there it would accept every combination and deliver none.
     let global_shortcut_backend = global_shortcuts::initial_backend();
+    #[cfg(not(target_os = "android"))]
     if global_shortcut_backend == global_shortcuts::Backend::Native {
         builder = builder.plugin(tauri_plugin_global_shortcut::Builder::new().build());
     }
@@ -213,7 +233,7 @@ pub fn run() {
     // Flatpak / app-store builds can compile it out — those channels
     // manage updates themselves and the in-app updater would clash
     // with their read-only install root.
-    #[cfg(all(not(debug_assertions), feature = "updater"))]
+    #[cfg(all(not(debug_assertions), updater_enabled))]
     {
         builder = builder
             .plugin(tauri_plugin_updater::Builder::new().build())
@@ -822,6 +842,9 @@ pub fn run() {
             commands::share_image::save_share_image,
             commands::sidebar_pins::list_sidebar_pins,
             commands::sidebar_pins::set_sidebar_pin,
+            commands::folder_browser::folder_browser_roots,
+            commands::folder_browser::folder_browser_list,
+            commands::folder_browser::platform_info,
         ])
         .on_window_event(startup::on_window_event)
         .build(context)

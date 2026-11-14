@@ -81,9 +81,11 @@ pub struct DropImportSummary {
 /// `WaveFlow` under the user's music folder (`~/Music` where the platform
 /// names none).
 pub fn managed_folder() -> Option<PathBuf> {
-    dirs::audio_dir()
-        .or_else(|| dirs::home_dir().map(|home| home.join("Music")))
-        .map(|music| music.join(MANAGED_FOLDER_NAME))
+    #[cfg(target_os = "android")]
+    let music = Some(PathBuf::from(crate::android::SHARED_STORAGE).join("Music"));
+    #[cfg(not(target_os = "android"))]
+    let music = dirs::audio_dir().or_else(|| dirs::home_dir().map(|home| home.join("Music")));
+    music.map(|music| music.join(MANAGED_FOLDER_NAME))
 }
 
 /// One file to copy, where, and the lyrics that follow it.

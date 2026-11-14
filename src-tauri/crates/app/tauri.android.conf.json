@@ -1,0 +1,21 @@
+{
+  "identifier": "app.waveflow.unofficial",
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "WaveFlow"
+      }
+    ]
+  },
+  "bundle": {
+    "createUpdaterArtifacts": false,
+    "resources": null,
+    "android": {
+      "minSdkVersion": 26
+    }
+  },
+  "build": {
+    "beforeBuildCommand": ""
+  }
+}

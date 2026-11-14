@@ -439,6 +439,7 @@ pub(crate) fn setup(
         }
     });
 
+    #[cfg(not(target_os = "android"))]
     super::tray::build(app)?;
 
     // Splash → main handoff.

@@ -73,22 +73,15 @@ tauri-plugin-dialog = "2"
 # plugin's file pickers reach the desktop portal anyway, through GTK (see
 # `preflight_file_dialogs` in lib.rs). Only the features match: the
 # plugin asks for rfd 0.16, so the lockfile carries both versions.
-rfd = { version = "0.17", default-features = false, features = [
-    "gtk3",
-    "common-controls-v6",
-] }
-tauri-plugin-updater = { version = "2", optional = true }
 # Single-instance lock: a second `waveflow` invocation surrenders to the
 # first, which surfaces and focuses its main window. Prevents two audio
 # engines fighting over the same SQLite file and cpal device.
-tauri-plugin-single-instance = "2"
 # Cross-platform autostart wiring. Backed by:
 #  - Windows: HKCU\Software\Microsoft\Windows\CurrentVersion\Run
 #  - macOS:   LaunchAgent plist under ~/Library/LaunchAgents
 #  - Linux:   ~/.config/autostart/<bin>.desktop (XDG spec)
 # Persisted state lives entirely in the OS so the toggle survives an
 # uninstall/reinstall the same way Spotify's "Open on startup" does.
-tauri-plugin-autostart = "2"
 # Cross-platform native toast notifications. Bridged to Windows Action
 # Center (toastify), macOS NSUserNotification, and libnotify on Linux.
 # Off by default and gated on `app_setting['notifications.track_change']`.
@@ -97,7 +90,6 @@ tauri-plugin-notification = "2"
 # Carbon hot keys on macOS (no accessibility permission needed), an X11
 # key grab on Linux. Wayland has no global grab; that session goes
 # through the XDG GlobalShortcuts portal instead, over the zbus below.
-tauri-plugin-global-shortcut = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_urlencoded = "0.7"
@@ -229,7 +221,6 @@ sha2 = "0.11"
 # OS-level media controls: SMTC on Windows, MPRIS on Linux,
 # MediaRemoteCommandCenter on macOS. Souvlaki abstracts the three
 # behind a single API; the integration lives in `media_controls.rs`.
-souvlaki = "0.9"
 
 # Build proper file:// URIs for cover art paths handed to MPRIS / SMTC.
 # `url` is already in our transitive tree via reqwest.
@@ -289,7 +280,6 @@ zip = { version = "9", default-features = false, features = ["deflate", "time"] 
 # `media_controls.rs`: a dedicated thread owns the IPC client and
 # reconnects when Discord is restarted. Opt-in via the
 # `integrations.discord_rpc` profile setting.
-discord-rich-presence = "1"
 # Duplicate copies go to the system's trash rather than off the library
 # alone (#878): the Recycle Bin, the freedesktop trash, NSFileManager.
 # Its `windows` and `objc2` are the versions Tauri already pulls in.
@@ -299,15 +289,36 @@ discord-rich-presence = "1"
 # `default-features = false` leaves Linux with no backend and the crate
 # does not build there. The `portal` feature stays off: inside Flatpak
 # `trash.rs` talks to the trash portal itself.
-trash = { version = "5.3", default-features = false, features = [
-  "coinit_apartmentthreaded",
-  "freedesktop",
-] }
 # Whether a copy and the copy kept for it are one file reached by two
 # paths (a mapped drive and its UNC path, a bind mount), which
 # `canonicalize` cannot tell: by volume and file index / device and inode.
 # Already in the tree through `walkdir`.
 same-file = "1"
+
+# Desktop-only crates. None of them has an Android backend (no tray, no
+# global hot keys, no OS trash, no Discord IPC pipe, no native message
+# box), so the Android build leaves them out and `src/android/` supplies
+# the modules that stand in for the ones built on them.
+[target.'cfg(not(target_os = "android"))'.dependencies]
+rfd = { version = "0.17", default-features = false, features = [
+    "gtk3",
+    "common-controls-v6",
+] }
+tauri-plugin-updater = { version = "2", optional = true }
+tauri-plugin-single-instance = "2"
+tauri-plugin-autostart = "2"
+tauri-plugin-global-shortcut = "2"
+souvlaki = "0.9"
+discord-rich-presence = "1"
+trash = { version = "5.3", default-features = false, features = [
+  "coinit_apartmentthreaded",
+  "freedesktop",
+] }
+
+# Android-only: the JNI surface the foreground playback service talks to
+# (`src/android/media_controls.rs`). The version wry already links.
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "0.21"
 
 [dev-dependencies]
 # Sandboxed scratch directories for unit tests that touch the filesystem

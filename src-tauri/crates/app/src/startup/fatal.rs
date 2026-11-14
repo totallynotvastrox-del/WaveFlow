@@ -122,6 +122,14 @@ pub(super) fn report_fatal_and_exit(err: &AppError) -> ! {
 /// situation. GTK and `TaskDialogIndirect` accept any thread, and a
 /// dedicated one is the shape actually measured working on both: on
 /// Windows in issue #528, on Linux in #529's standalone control.
+#[cfg(target_os = "android")]
+fn show_native_error(title: String, body: String) {
+    // No native message box before the activity exists; the log (and
+    // logcat, through stdout) carries it.
+    tracing::error!(%title, %body, "fatal startup error");
+}
+
+#[cfg(not(target_os = "android"))]
 fn show_native_error(title: String, body: String) {
     fn dialog(title: &str, body: &str) -> rfd::MessageDialog {
         rfd::MessageDialog::new()

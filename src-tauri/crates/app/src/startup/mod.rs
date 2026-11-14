@@ -7,6 +7,7 @@ mod fatal;
 mod preflight;
 mod resume_point;
 mod setup;
+#[cfg(not(target_os = "android"))]
 mod tray;
 mod window;
 

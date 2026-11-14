@@ -14,6 +14,7 @@ const MIN_VISIBLE_OVERLAP: f64 = 80.0;
 /// [`MIN_VISIBLE_OVERLAP`] logical pixels with at least one available monitor.
 /// Falls back to `true` (optimistic restore) when the monitor list cannot be
 /// queried. Mirrors the frontend `boundsAreVisible` check in `miniPlayer.ts`.
+#[cfg(not(target_os = "android"))]
 fn bounds_on_screen(
     window: &tauri::WebviewWindow,
     b: &commands::preferences::MiniPlayerBounds,
@@ -49,6 +50,14 @@ fn bounds_on_screen(
 /// the splash — so gating the reveal on a *cosmetic* bounds failure could
 /// trap the user on the splash when `set_size` fails persistently. The
 /// saved size/position is a nice-to-have; escaping the splash is not.
+#[cfg(target_os = "android")]
+pub(super) async fn restore_bounds_and_reveal(app: AppHandle) -> bool {
+    // One full-screen activity: no bounds to restore, no chrome to pick,
+    // no splash window to close.
+    reveal_main_close_splash(&app)
+}
+
+#[cfg(not(target_os = "android"))]
 pub(super) async fn restore_bounds_and_reveal(app: AppHandle) -> bool {
     let state = app.state::<AppState>();
     // Before the reveal, not after: the window is created hidden, so a

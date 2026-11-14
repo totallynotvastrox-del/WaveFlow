@@ -451,9 +451,11 @@ pub async fn reset_app(
 /// caller. Returns the directory the archives landed in when at least one
 /// was written. Guard for issue #367.
 async fn safety_backup_all_profiles(state: &AppState) -> Option<PathBuf> {
-    let target_dir = dirs::document_dir()
-        .or_else(dirs::home_dir)
-        .map(|base| base.join("WaveFlow Backups"))?;
+    #[cfg(target_os = "android")]
+    let base = Some(PathBuf::from(crate::android::SHARED_STORAGE).join("Documents"));
+    #[cfg(not(target_os = "android"))]
+    let base = dirs::document_dir().or_else(dirs::home_dir);
+    let target_dir = base.map(|base| base.join("WaveFlow Backups"))?;
     if let Err(err) = std::fs::create_dir_all(&target_dir) {
         tracing::warn!(
             ?err,

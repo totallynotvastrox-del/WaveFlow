@@ -13,16 +13,20 @@
 //! taskbar thumbnail on Windows (`crate::taskbar_buttons`), which are
 //! built at startup for the same reason.
 
+#[cfg(not(target_os = "android"))]
 use tauri::{
     menu::{CheckMenuItem, MenuItem},
-    AppHandle, Manager, Runtime, State,
+    Manager, State,
 };
+use tauri::{AppHandle, Runtime};
 
+#[cfg(not(target_os = "android"))]
 use crate::desktop_lyrics::DesktopLyricsStatus;
 
 /// Holds the user-facing tray items so their labels can be retitled at
 /// runtime when the UI language changes, and the two desktop lyrics check
 /// marks kept in step with the window.
+#[cfg(not(target_os = "android"))]
 pub struct TrayMenuItems<R: Runtime> {
     pub play_pause: MenuItem<R>,
     pub previous: MenuItem<R>,
@@ -35,6 +39,7 @@ pub struct TrayMenuItems<R: Runtime> {
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(target_os = "android", allow(dead_code))]
 pub struct TrayLabels {
     pub play_pause: String,
     pub previous: String,
@@ -63,12 +68,22 @@ pub fn set_tray_labels<R: Runtime>(app: AppHandle<R>, labels: TrayLabels) -> Res
             next: labels.next.clone(),
         });
     }
-    let Some(items) = app.try_state::<TrayMenuItems<R>>() else {
-        return Ok(());
-    };
-    apply(&items, &labels).map_err(|e| e.to_string())
+    #[cfg(not(target_os = "android"))]
+    {
+        let Some(items) = app.try_state::<TrayMenuItems<R>>() else {
+            return Ok(());
+        };
+        apply(&items, &labels).map_err(|e| e.to_string())
+    }
+    // No tray on Android: the labels have nothing to name.
+    #[cfg(target_os = "android")]
+    {
+        let _ = (app, labels);
+        Ok(())
+    }
 }
 
+#[cfg(not(target_os = "android"))]
 fn apply<R: Runtime>(
     items: &State<'_, TrayMenuItems<R>>,
     labels: &TrayLabels,
@@ -91,6 +106,7 @@ fn apply<R: Runtime>(
 /// the real state rather than left to the menu. "Lock" is only offered
 /// while the window is open: locking nothing would be a promise the next
 /// window, which always opens unlocked, does not keep.
+#[cfg(not(target_os = "android"))]
 pub fn sync_desktop_lyrics(app: &AppHandle, status: DesktopLyricsStatus) {
     let Some(items) = app.try_state::<TrayMenuItems<tauri::Wry>>() else {
         return;

@@ -110,6 +110,22 @@ fn choice_from_exit(code: Option<i32>) -> Choice {
 
 /// Ask from the pre-flight, before the event loop, through a child
 /// process (see the module docs). Blocks until the user answers.
+#[cfg(target_os = "android")]
+pub fn ask_at_launch(scope: DbScope, failure: &SnapshotFailure) -> Choice {
+    // No second process can be started to ask from, and no dialog can be
+    // shown before the activity exists. Going on is the answer that still
+    // opens the library; the reason is in the log.
+    tracing::warn!(
+        ?scope,
+        reason = %failure.reason,
+        "pre-migration backup: could not be made and cannot be asked about on Android; continuing"
+    );
+    Choice::Continue
+}
+
+/// Ask from the pre-flight, before the event loop, through a child
+/// process (see the module docs). Blocks until the user answers.
+#[cfg(not(target_os = "android"))]
 pub fn ask_at_launch(scope: DbScope, failure: &SnapshotFailure) -> Choice {
     // Without a display server there is nobody to ask, and `rfd`'s GTK
     // backend would park forever trying (see `show_native_error`).
@@ -153,6 +169,10 @@ pub fn ask_at_launch(scope: DbScope, failure: &SnapshotFailure) -> Choice {
 /// When this process was started by [`ask_at_launch`], ask the question
 /// and exit with the answer. Called first thing in `run`, before anything
 /// writes a file or starts a thread; any other start returns at once.
+#[cfg(target_os = "android")]
+pub fn answer_if_asked() {}
+
+#[cfg(not(target_os = "android"))]
 pub fn answer_if_asked() {
     let mut args = std::env::args_os().skip(1);
     if args.next().as_deref() != Some(std::ffi::OsStr::new(ASK_FLAG)) {

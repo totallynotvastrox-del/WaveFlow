@@ -24,7 +24,17 @@ fn sync_updater_capability() {
     let path = PathBuf::from("capabilities/updater.json");
     // Cargo exposes feature flags as `CARGO_FEATURE_<NAME>` env vars.
     println!("cargo:rerun-if-env-changed=CARGO_FEATURE_UPDATER");
-    if env::var_os("CARGO_FEATURE_UPDATER").is_some() {
+    // `updater_enabled` is what the sources test, not the feature itself:
+    // the plugin has no Android backend, so there the feature being on
+    // (it is a default) must still leave the updater out.
+    println!("cargo:rustc-check-cfg=cfg(updater_enabled)");
+    println!("cargo:rerun-if-env-changed=CARGO_CFG_TARGET_OS");
+    let android = env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("android");
+    let enabled = env::var_os("CARGO_FEATURE_UPDATER").is_some() && !android;
+    if enabled {
+        println!("cargo:rustc-cfg=updater_enabled");
+    }
+    if enabled {
         let contents = concat!(
             "{\n",
             "  \"$schema\": \"../gen/schemas/desktop-schema.json\",\n",

@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+#[cfg(not(target_os = "android"))]
 use tauri::path::BaseDirectory;
 use tauri::{AppHandle, Manager};
 use waveflow_core::plugin::PluginPaths;
@@ -109,6 +110,13 @@ impl AppPaths {
         // that bundled plugins resolve under `<app-data>/plugins/`
         // (matching pre-1.5.1 behaviour). We log the failure so a
         // mispackaged installer surfaces visibly in tracing.
+        // An APK's resources are zip entries, not files: nothing on disk
+        // to point the plugin host at. The bundled plugins are compiled
+        // into the Android library and unpacked beside the data instead.
+        #[cfg(target_os = "android")]
+        let bundled_plugins_dir =
+            crate::android::unpack_bundled_plugins(&data_dir.join("waveflow"));
+        #[cfg(not(target_os = "android"))]
         let bundled_plugins_dir = match handle.path().resolve("plugins", BaseDirectory::Resource) {
             Ok(path) if path.exists() && path.is_dir() => Some(path),
             Ok(path) => {
@@ -199,9 +207,21 @@ impl AppPaths {
     /// site rather than hardcoded, so `tauri.conf.json` stays the single
     /// source of truth.
     pub fn root_for_identifier(identifier: &str) -> AppResult<PathBuf> {
-        dirs::data_dir()
-            .ok_or(AppError::MissingAppDataDir)
-            .map(|dir| dir.join(identifier).join("waveflow"))
+        // Tauri's `app_data_dir()` on Android is the app's private data
+        // directory (`Context.getDataDir()`), not a `dirs` location.
+        #[cfg(target_os = "android")]
+        {
+            let _ = identifier;
+            crate::android::private_dir()
+                .ok_or(AppError::MissingAppDataDir)
+                .map(|dir| dir.join("waveflow"))
+        }
+        #[cfg(not(target_os = "android"))]
+        {
+            dirs::data_dir()
+                .ok_or(AppError::MissingAppDataDir)
+                .map(|dir| dir.join(identifier).join("waveflow"))
+        }
     }
 
     /// Create every directory that the application expects to exist.

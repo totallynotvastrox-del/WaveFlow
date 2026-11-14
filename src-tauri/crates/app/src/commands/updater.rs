@@ -304,7 +304,7 @@ pub async fn set_update_auto_check(
     Ok(())
 }
 
-#[cfg(all(not(debug_assertions), feature = "updater"))]
+#[cfg(all(not(debug_assertions), updater_enabled))]
 mod imp {
     use super::*;
     use tauri::{AppHandle, Emitter, Manager};
@@ -472,7 +472,7 @@ mod imp {
     }
 }
 
-#[cfg(all(not(debug_assertions), feature = "updater"))]
+#[cfg(all(not(debug_assertions), updater_enabled))]
 pub use imp::PendingUpdate;
 
 /// Look for a newer build on the channel in force.
@@ -507,11 +507,11 @@ pub async fn check_for_update(
         automatic,
         "update check allowed: the manifests are read when this build has an updater"
     );
-    #[cfg(all(not(debug_assertions), feature = "updater"))]
+    #[cfg(all(not(debug_assertions), updater_enabled))]
     {
         imp::check(&app, channel).await
     }
-    #[cfg(not(all(not(debug_assertions), feature = "updater")))]
+    #[cfg(not(all(not(debug_assertions), updater_enabled)))]
     {
         // No updater plugin in this build (dev / package-manager builds).
         // An automatic check reports "nothing available" so the UI stays
@@ -534,11 +534,11 @@ pub async fn install_update(app: tauri::AppHandle) -> AppResult<()> {
     if crate::offline::is_offline() {
         return Err(AppError::Other(OFFLINE_MESSAGE.into()));
     }
-    #[cfg(all(not(debug_assertions), feature = "updater"))]
+    #[cfg(all(not(debug_assertions), updater_enabled))]
     {
         imp::install(&app).await
     }
-    #[cfg(not(all(not(debug_assertions), feature = "updater")))]
+    #[cfg(not(all(not(debug_assertions), updater_enabled)))]
     {
         let _ = &app;
         Err(AppError::Other(UNAVAILABLE_MESSAGE.into()))

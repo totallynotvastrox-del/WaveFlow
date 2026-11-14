@@ -19,6 +19,7 @@ pub mod dlna;
 pub mod duplicates;
 pub mod edit;
 pub mod enrichment;
+pub mod folder_browser;
 pub mod global_shortcuts;
 pub mod home_suggestion;
 pub mod integration;

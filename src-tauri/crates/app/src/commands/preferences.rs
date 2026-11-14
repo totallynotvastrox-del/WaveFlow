@@ -29,6 +29,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
+#[cfg(not(target_os = "android"))]
 use tauri_plugin_autostart::ManagerExt;
 
 use crate::{error::AppResult, state::AppState};
@@ -146,19 +147,36 @@ pub async fn set_sort_ignore_articles(
 
 #[tauri::command]
 pub async fn get_auto_start(app: tauri::AppHandle) -> AppResult<bool> {
-    Ok(app.autolaunch().is_enabled().unwrap_or(false))
+    #[cfg(not(target_os = "android"))]
+    {
+        Ok(app.autolaunch().is_enabled().unwrap_or(false))
+    }
+    // Android starts no app at boot on the user's behalf.
+    #[cfg(target_os = "android")]
+    {
+        let _ = app;
+        Ok(false)
+    }
 }
 
 #[tauri::command]
 pub async fn set_auto_start(app: tauri::AppHandle, enabled: bool) -> AppResult<()> {
-    let manager = app.autolaunch();
-    let result = if enabled {
-        manager.enable()
-    } else {
-        manager.disable()
-    };
-    result.map_err(|err| crate::error::AppError::Other(format!("autostart: {err}")))?;
-    Ok(())
+    #[cfg(target_os = "android")]
+    {
+        let _ = (app, enabled);
+        Ok(())
+    }
+    #[cfg(not(target_os = "android"))]
+    {
+        let manager = app.autolaunch();
+        let result = if enabled {
+            manager.enable()
+        } else {
+            manager.disable()
+        };
+        result.map_err(|err| crate::error::AppError::Other(format!("autostart: {err}")))?;
+        Ok(())
+    }
 }
 
 /// UI zoom level (1.0 = 100 %). Stored in `app_setting` because it's a
