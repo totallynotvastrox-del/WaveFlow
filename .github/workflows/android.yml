@@ -1,0 +1,21 @@
+name: Android APK
+
+on:
+  push:
+    branches: [android]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"; ls "$ANDROID_HOME"; ls "$ANDROID_HOME/ndk" || true
+          echo "NDK latest: $ANDROID_NDK_LATEST_HOME"; ls "$ANDROID_HOME/build-tools"; java -version; nproc; free -g; df -h /
