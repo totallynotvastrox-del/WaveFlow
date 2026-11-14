@@ -31,6 +31,7 @@ pub(crate) fn on_second_instance(app: &AppHandle, argv: Vec<String>, cwd: String
     skin_recovery::restore_after_duplicate_launch();
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.show();
+        #[cfg(not(target_os = "android"))]
         let _ = window.unminimize();
         let _ = window.set_focus();
         webview_memory::sync(&window);

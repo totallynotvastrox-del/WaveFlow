@@ -42,9 +42,12 @@ pub(crate) fn emit_track_changed(
         _ => payload.title.clone(),
     };
     let _ = app.emit("player:track-changed", payload.clone());
+    #[cfg(not(target_os = "android"))]
     if let Some(tray) = app.tray_by_id("waveflow") {
         let _ = tray.set_tooltip(Some(tooltip));
     }
+    #[cfg(target_os = "android")]
+    let _ = tooltip;
 
     // Push the new track to the OS media overlay (SMTC / MPRIS /
     // MediaRemote). Optional — `init` returns None on platforms

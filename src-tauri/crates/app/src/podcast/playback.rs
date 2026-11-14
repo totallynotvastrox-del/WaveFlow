@@ -440,6 +440,7 @@ pub(crate) fn announce(app: &AppHandle, load: &EpisodeLoad) {
     if let Some(presence) = app.try_state::<crate::discord_presence::DiscordPresenceHandle>() {
         presence.clear();
     }
+    #[cfg(not(target_os = "android"))]
     if let Some(tray) = app.tray_by_id("waveflow") {
         let _ = tray.set_tooltip(Some(format!("{} — {}", load.title, load.channel)));
     }

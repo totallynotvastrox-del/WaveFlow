@@ -4,7 +4,9 @@
 use tauri::{AppHandle, Manager};
 
 use crate::state::AppState;
-use crate::{commands, webview_memory};
+#[cfg(not(target_os = "android"))]
+use crate::commands;
+use crate::webview_memory;
 
 /// Minimum logical-pixel overlap for a saved window position to be considered
 /// on-screen. Mirrors `MIN_VISIBLE_OVERLAP` in `miniPlayer.ts`.
@@ -101,6 +103,7 @@ pub(super) async fn restore_bounds_and_reveal(app: AppHandle) -> bool {
 pub(super) fn show_main_window(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.show();
+        #[cfg(not(target_os = "android"))]
         let _ = window.unminimize();
         let _ = window.set_focus();
         webview_memory::sync(&window);
