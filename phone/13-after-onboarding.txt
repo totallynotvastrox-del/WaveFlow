@@ -1,0 +1,41 @@
+  540, 1233  WaveFlow
+  780,  201  Advanced filters
+  953,  201  D
+  528, 1004  No track
+  322,  358  Good evening
+  569,  377  ,
+  657,  377  Default
+  252,  457  Sunday, November 15
+  444,  457  ·
+  532,  457  0 tracks
+  619,  457  ·
+  716,  457  0 albums
+   89,  508  ·
+  216,  508  0 liked tracks
+  344,  508  ·
+  459,  508  0 h listened
+  546,  631  PICK UP WHERE YOU LEFT OFF
+  546,  727  No track
+  227,  906  Play
+  528, 2094  What WaveFlow can do
+  262, 1927  FIRST STEPS
+  460, 1992  What WaveFlow can do
+  460, 2060  Discovered: 0 / 8
+  861, 1950  Hide first steps
+  528, 2263  Immersive view The cover up large, the lyrics beside it.
+    0,    0  Mini-player A small window that stays on top.
+    0,    0  Desktop lyrics Lyrics floating above your windows.
+    0,    0  Smart playlist Set a few rules and it fills itself.
+    0,    0  MusicBrainz enrichment Fills in missing genres, dates and covers.
+    0,    0  Tag workshop Fix a whole album's tags in one go.
+    0,    0  Wrapped Your year of listening in a few cards.
+    0,    0  Install an extension Lyrics, Canvas, animated covers…
+  346, 2105  Immersive view
+  736, 2105  Queue
+  872, 2105  Play
+ 1009, 2105  Next
+  540, 2263  Navigation
+  136, 2265  Home
+  405, 2265  Library
+  676, 2265  Liked
+  944, 2265  Menu
