@@ -1,7 +1,81 @@
-# First launch on a phone-sized emulator.
-wait 25
-shot 01-launch
-dump 01-launch
+# First launch on a phone-sized emulator: onboarding, picking the test
+# folder with the in-app picker, the scan, the library, playback and the
+# media notification.
+wait 40
+shot 01-welcome
+tap ^Get started
+wait 3
+shot 02-photo
+dump 02-photo
+tap ^(Skip|Continue)$
+wait 3
+shot 03-folder
+dump 03-folder
+tap ^Choose a folder
+wait 4
+shot 04-picker
+dump 04-picker
+tap ^Music$
+wait 3
+tap ^Smoke$
+wait 3
+shot 05-picker-smoke
+dump 05-picker-smoke
+tap ^Use 
 wait 20
-shot 02-settled
-dump 02-settled
+shot 06-scan
+dump 06-scan
+tap ^Continue$
+wait 3
+shot 07-look
+tap ^Continue$
+wait 3
+shot 08-listening
+tap ^Continue$
+wait 3
+shot 09-lyrics
+tap ^Continue$
+wait 3
+shot 10-plugins
+tap ^Continue$
+wait 3
+shot 11-connections
+dump 11-connections
+tap ^Continue$
+wait 3
+shot 12-done
+dump 12-done
+tap ^(Finish|Go to the library)$
+wait 4
+tap ^Later$
+wait 4
+shot 13-after-onboarding
+dump 13-after-onboarding
+tap ^Library$
+wait 6
+shot 14-library
+dump 14-library
+tap ^Smoke Track 2$
+wait 8
+shot 15-playing
+dump 15-playing
+shell dumpsys media_session | grep -B2 -A16 app.waveflow | head -60
+shell cmd statusbar expand-notifications
+wait 4
+shot 16-notification
+dump 16-notification
+shell cmd statusbar collapse
+wait 2
+tap ^Immersive view$
+wait 5
+shot 17-immersive
+dump 17-immersive
+back
+wait 3
+tap ^Menu$
+wait 3
+shot 18-drawer
+back
+wait 2
+shot 19-end
+expect Smoke Track
