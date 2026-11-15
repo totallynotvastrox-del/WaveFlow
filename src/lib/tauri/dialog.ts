@@ -1,4 +1,4 @@
-import { open, save } from "@tauri-apps/plugin-dialog";
+import { open, save } from "./nativeDialog";
 
 /**
  * Open the native folder picker and return the absolute path the user

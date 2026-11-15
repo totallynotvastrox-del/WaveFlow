@@ -4875,5 +4875,35 @@
     "switchToAudio": "Sese geç",
     "expand": "Videoyu büyüt",
     "shrink": "Videoyu küçült"
+  },
+  "android": {
+    "nav": {
+      "label": "Gezinme",
+      "library": "Kitaplık",
+      "liked": "Beğenilenler",
+      "menu": "Menü"
+    },
+    "picker": {
+      "titleFolder": "Bir klasör seç",
+      "titleFile": "Bir dosya seç",
+      "titleSave": "Farklı kaydet",
+      "up": "Bir üst düzey",
+      "empty": "Burada gösterilecek bir şey yok",
+      "audioCount": "Bu klasördeki ses dosyaları: {{count}}",
+      "fileName": "Dosya adı",
+      "chooseFolder": "“{{name}}” klasörünü kullan"
+    },
+    "storage": {
+      "title": "Müziğine erişime izin ver",
+      "body": "WaveFlow müzik dosyalarını doğrudan okur ve çalar. WaveFlow için “Tüm dosyalara erişim”i aç, sonra geri dön.",
+      "action": "Ayarları aç"
+    },
+    "layout": {
+      "title": "Cihaz düzeni",
+      "description": "WaveFlow'un bu cihazda nasıl yerleşeceği. Otomatik, ekran boyutunu izler.",
+      "auto": "Otomatik",
+      "phone": "Telefon",
+      "tablet": "Tablet"
+    }
   }
 }

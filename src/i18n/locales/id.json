@@ -4870,5 +4870,35 @@
     "switchToAudio": "Beralih ke audio",
     "expand": "Perbesar video",
     "shrink": "Perkecil video"
+  },
+  "android": {
+    "nav": {
+      "label": "Navigasi",
+      "library": "Pustaka",
+      "liked": "Disukai",
+      "menu": "Menu"
+    },
+    "picker": {
+      "titleFolder": "Pilih folder",
+      "titleFile": "Pilih file",
+      "titleSave": "Simpan sebagai",
+      "up": "Naik satu tingkat",
+      "empty": "Tidak ada yang ditampilkan di sini",
+      "audioCount": "File audio di folder ini: {{count}}",
+      "fileName": "Nama file",
+      "chooseFolder": "Gunakan “{{name}}”"
+    },
+    "storage": {
+      "title": "Izinkan akses ke musik Anda",
+      "body": "WaveFlow membaca dan memutar file musik Anda secara langsung. Aktifkan “Akses semua file” untuk WaveFlow, lalu kembali.",
+      "action": "Buka pengaturan"
+    },
+    "layout": {
+      "title": "Tata letak perangkat",
+      "description": "Cara WaveFlow menata dirinya di perangkat ini. Otomatis mengikuti ukuran layar.",
+      "auto": "Otomatis",
+      "phone": "Ponsel",
+      "tablet": "Tablet"
+    }
   }
 }

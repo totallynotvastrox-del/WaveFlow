@@ -31,6 +31,8 @@ import { AudioQualityFooter } from "./AudioQualityFooter";
 import { ImmersiveView } from "./ImmersiveView";
 import { useLikedTracks } from "../../hooks/useLikedTracks";
 import { useSkin } from "../../hooks/useSkin";
+import { useDeviceMode } from "../../lib/platform";
+import { MobilePlayerBar } from "../android/MobilePlayerBar";
 
 interface PlayerBarProps {
   onNavigateToArtist: (artistId: number) => void;
@@ -69,6 +71,7 @@ export function PlayerBar({ onNavigateToArtist }: PlayerBarProps) {
   // match the historical hard-coded behaviour so the upgrade is
   // invisible until the user visits Settings → Playback.
   const layout = usePlayerBarLayout();
+  const device = useDeviceMode();
   // Fluid draws the progress as the bar's top edge — a full-width wave
   // with the times at its ends — and keeps only the transport in the
   // centre column; Lounge's line of light (`horizon`) sits in the same
@@ -136,6 +139,26 @@ export function PlayerBar({ onNavigateToArtist }: PlayerBarProps) {
     else if (layout.coverAction === "immersive") openFullscreenNowPlaying();
     // `none` → no-op (button is disabled, this branch is defensive).
   };
+
+  // The Android phone layout: a compact bar, with the rest of the
+  // controls in the full-screen player it opens.
+  if (device === "phone") {
+    return (
+      <>
+        <MobilePlayerBar />
+        {immersiveOpen && (
+          <ImmersiveView
+            initialTab={immersiveInitialTab}
+            startsInTheater={immersiveStartsInTheater}
+            onClose={closeImmersive}
+            onNavigateToArtist={onNavigateToArtist}
+            isLiked={isLiked}
+            onToggleLike={handleToggleLike}
+          />
+        )}
+      </>
+    );
+  }
 
   return (
     <>

@@ -4870,5 +4870,35 @@
     "switchToAudio": "オーディオに切り替え",
     "expand": "ビデオを拡大",
     "shrink": "ビデオを縮小"
+  },
+  "android": {
+    "nav": {
+      "label": "ナビゲーション",
+      "library": "ライブラリ",
+      "liked": "お気に入り",
+      "menu": "メニュー"
+    },
+    "picker": {
+      "titleFolder": "フォルダを選択",
+      "titleFile": "ファイルを選択",
+      "titleSave": "名前を付けて保存",
+      "up": "1つ上の階層へ",
+      "empty": "ここには表示するものがありません",
+      "audioCount": "このフォルダ内のオーディオファイル: {{count}}",
+      "fileName": "ファイル名",
+      "chooseFolder": "「{{name}}」を使用"
+    },
+    "storage": {
+      "title": "音楽へのアクセスを許可",
+      "body": "WaveFlow は音楽ファイルを直接読み込んで再生します。WaveFlow の「すべてのファイルへのアクセス」をオンにしてから戻ってください。",
+      "action": "設定を開く"
+    },
+    "layout": {
+      "title": "デバイスのレイアウト",
+      "description": "このデバイスでの WaveFlow の配置方法です。自動は画面サイズに従います。",
+      "auto": "自動",
+      "phone": "スマートフォン",
+      "tablet": "タブレット"
+    }
   }
 }

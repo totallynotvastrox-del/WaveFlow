@@ -4875,5 +4875,35 @@
     "switchToAudio": "Naar audio",
     "expand": "Video vergroten",
     "shrink": "Video verkleinen"
+  },
+  "android": {
+    "nav": {
+      "label": "Navigatie",
+      "library": "Bibliotheek",
+      "liked": "Favorieten",
+      "menu": "Menu"
+    },
+    "picker": {
+      "titleFolder": "Kies een map",
+      "titleFile": "Kies een bestand",
+      "titleSave": "Opslaan als",
+      "up": "Eén niveau omhoog",
+      "empty": "Hier is niets te tonen",
+      "audioCount": "Audiobestanden in deze map: {{count}}",
+      "fileName": "Bestandsnaam",
+      "chooseFolder": "‘{{name}}’ gebruiken"
+    },
+    "storage": {
+      "title": "Toegang tot je muziek toestaan",
+      "body": "WaveFlow leest en speelt je muziekbestanden rechtstreeks af. Schakel ‘Toegang tot alle bestanden’ in voor WaveFlow en kom dan terug.",
+      "action": "Instellingen openen"
+    },
+    "layout": {
+      "title": "Apparaatindeling",
+      "description": "Hoe WaveFlow zich op dit apparaat indeelt. Automatisch volgt de schermgrootte.",
+      "auto": "Automatisch",
+      "phone": "Telefoon",
+      "tablet": "Tablet"
+    }
   }
 }

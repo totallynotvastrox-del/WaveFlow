@@ -29,6 +29,8 @@ pub struct BrowserListing {
     pub path: String,
     pub parent: Option<String>,
     pub dirs: Vec<BrowserEntry>,
+    /// Files matching the extensions asked for; empty when none were.
+    pub files: Vec<BrowserEntry>,
     /// Audio files directly inside, so the user can tell a music folder
     /// from an empty one before picking it.
     pub audio_files: usize,
@@ -82,18 +84,24 @@ pub fn folder_browser_roots() -> Vec<BrowserEntry> {
         .collect()
 }
 
-/// The folders directly inside `path`, hidden ones left out.
+/// The folders directly inside `path`, hidden ones left out. With
+/// `extensions`, also the files carrying one of them (an empty list
+/// means every file), for picking a file rather than a folder.
 #[tauri::command]
-pub async fn folder_browser_list(path: String) -> AppResult<BrowserListing> {
-    tokio::task::spawn_blocking(move || list(Path::new(&path)))
+pub async fn folder_browser_list(
+    path: String,
+    extensions: Option<Vec<String>>,
+) -> AppResult<BrowserListing> {
+    tokio::task::spawn_blocking(move || list(Path::new(&path), extensions.as_deref()))
         .await
         .map_err(|err| AppError::Other(format!("folder listing stopped: {err}")))?
 }
 
-fn list(path: &Path) -> AppResult<BrowserListing> {
+fn list(path: &Path, extensions: Option<&[String]>) -> AppResult<BrowserListing> {
     let entries = std::fs::read_dir(path)
         .map_err(|err| AppError::Other(format!("{}: {err}", path.display())))?;
     let mut dirs = Vec::new();
+    let mut files = Vec::new();
     let mut audio_files = 0;
     for entry in entries.flatten() {
         let name = entry.file_name().to_string_lossy().into_owned();
@@ -114,15 +122,33 @@ fn list(path: &Path) -> AppResult<BrowserListing> {
                 name,
                 path: entry_path.to_string_lossy().into_owned(),
             });
-        } else if entry_path
-            .extension()
-            .and_then(|e| e.to_str())
-            .is_some_and(|e| AUDIO_EXTENSIONS.contains(&e.to_ascii_lowercase().as_str()))
-        {
-            audio_files += 1;
+        } else {
+            let extension = entry_path
+                .extension()
+                .and_then(|e| e.to_str())
+                .map(str::to_ascii_lowercase);
+            if extension
+                .as_deref()
+                .is_some_and(|e| AUDIO_EXTENSIONS.contains(&e))
+            {
+                audio_files += 1;
+            }
+            let wanted = extensions.is_some_and(|wanted| {
+                wanted.is_empty()
+                    || extension
+                        .as_deref()
+                        .is_some_and(|e| wanted.iter().any(|w| w.eq_ignore_ascii_case(e)))
+            });
+            if wanted {
+                files.push(BrowserEntry {
+                    name,
+                    path: entry_path.to_string_lossy().into_owned(),
+                });
+            }
         }
     }
     dirs.sort_by_key(|d| d.name.to_lowercase());
+    files.sort_by_key(|f| f.name.to_lowercase());
     let is_root = roots().iter().any(|root| root == path);
     let parent = if is_root {
         None
@@ -133,6 +159,7 @@ fn list(path: &Path) -> AppResult<BrowserListing> {
         path: path.to_string_lossy().into_owned(),
         parent,
         dirs,
+        files,
         audio_files,
     })
 }

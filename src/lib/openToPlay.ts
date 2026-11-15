@@ -1,5 +1,5 @@
 import { emit } from "@tauri-apps/api/event";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open } from "./tauri/nativeDialog";
 import i18n from "../i18n";
 import { playerPlayPaths } from "./tauri/player";
 

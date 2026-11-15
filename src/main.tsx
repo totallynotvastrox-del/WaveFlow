@@ -5,6 +5,7 @@ import { MiniPlayerApp } from "./MiniPlayerApp";
 import { DesktopLyricsApp } from "./DesktopLyricsApp";
 import { ReadySignal } from "./components/common/ReadySignal";
 import "./app.css";
+import "./styles/android.css";
 // Its listeners mark pointer focus, which `app.css` keeps ringless.
 import "./lib/inputModality";
 // Its listener keeps the webview's own menu out of everything but text fields.
@@ -49,6 +50,11 @@ import { i18nReady } from "./i18n";
 import { markBundleReady, markI18nReady } from "./lib/startupTiming";
 import { playerSetClipOpen } from "./lib/tauri/clip";
 import { WINDOW_ROLE } from "./lib/windowRole";
+import { initPlatform } from "./lib/platform";
+
+// Before the first render: the layout reads `data-device` on its first
+// paint, and the views read the mode it resolves to.
+initPlatform();
 
 // First statement that runs once the entry module is executing: the
 // document and every static import above are in (#626).

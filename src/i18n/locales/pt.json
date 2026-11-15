@@ -5016,5 +5016,35 @@
     "switchToAudio": "Mudar para o áudio",
     "expand": "Ampliar o vídeo",
     "shrink": "Reduzir o vídeo"
+  },
+  "android": {
+    "nav": {
+      "label": "Navegação",
+      "library": "Biblioteca",
+      "liked": "Favoritos",
+      "menu": "Menu"
+    },
+    "picker": {
+      "titleFolder": "Escolher uma pasta",
+      "titleFile": "Escolher um ficheiro",
+      "titleSave": "Guardar como",
+      "up": "Subir um nível",
+      "empty": "Nada para mostrar aqui",
+      "audioCount": "Ficheiros de áudio nesta pasta: {{count}}",
+      "fileName": "Nome do ficheiro",
+      "chooseFolder": "Usar «{{name}}»"
+    },
+    "storage": {
+      "title": "Permitir o acesso à sua música",
+      "body": "O WaveFlow lê e reproduz os seus ficheiros de música diretamente. Ative «Acesso a todos os ficheiros» para o WaveFlow e volte.",
+      "action": "Abrir definições"
+    },
+    "layout": {
+      "title": "Disposição do dispositivo",
+      "description": "Como o WaveFlow se organiza neste dispositivo. Automático segue o tamanho do ecrã.",
+      "auto": "Automático",
+      "phone": "Telemóvel",
+      "tablet": "Tablet"
+    }
   }
 }

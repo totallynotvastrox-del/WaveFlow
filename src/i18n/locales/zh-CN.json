@@ -4870,5 +4870,35 @@
     "switchToAudio": "切换到音频",
     "expand": "放大视频",
     "shrink": "缩小视频"
+  },
+  "android": {
+    "nav": {
+      "label": "导航",
+      "library": "音乐库",
+      "liked": "我喜欢",
+      "menu": "菜单"
+    },
+    "picker": {
+      "titleFolder": "选择文件夹",
+      "titleFile": "选择文件",
+      "titleSave": "另存为",
+      "up": "返回上一级",
+      "empty": "这里没有可显示的内容",
+      "audioCount": "此文件夹中的音频文件：{{count}}",
+      "fileName": "文件名",
+      "chooseFolder": "使用“{{name}}”"
+    },
+    "storage": {
+      "title": "允许访问你的音乐",
+      "body": "WaveFlow 直接读取并播放你的音乐文件。请为 WaveFlow 开启“所有文件访问权限”，然后返回。",
+      "action": "打开设置"
+    },
+    "layout": {
+      "title": "设备布局",
+      "description": "WaveFlow 在此设备上的排布方式。自动会跟随屏幕尺寸。",
+      "auto": "自动",
+      "phone": "手机",
+      "tablet": "平板"
+    }
   }
 }

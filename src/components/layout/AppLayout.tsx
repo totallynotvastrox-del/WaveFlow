@@ -77,6 +77,10 @@ const LibraryView = retryableLazy(() => {
 // Type-only, so it does not pull the lazily-loaded module into this
 // bundle: the entry below carries a category and has to spell it the
 // same way Settings does.
+import { useTranslation } from "react-i18next";
+import { IS_ANDROID, useDeviceMode } from "../../lib/platform";
+import { MobileTabBar } from "../android/MobileTabBar";
+import { PathPickerHost } from "../android/PathPickerHost";
 import type { SettingsCategory } from "../views/SettingsView";
 import type { SettingsGroupId } from "../views/settings/settingsCatalog";
 
@@ -247,7 +251,16 @@ function entryAfterProfileSwitch(entry: HistoryEntry): HistoryEntry {
 }
 
 export function AppLayout() {
-  const { activeRightPanel } = usePlayer();
+  const { activeRightPanel, closeRightPanel, immersiveOpen, closeImmersive } =
+    usePlayer();
+  // Android only: `phone` turns the sidebar into a drawer and adds the
+  // bottom navigation; `tablet` keeps the desktop arrangement.
+  const { t } = useTranslation();
+  const device = useDeviceMode();
+  const phone = device === "phone";
+  // The history entry the drawer was opened on: any navigation leaves
+  // that entry, which is what closes the drawer.
+  const [drawerEntry, setDrawerEntry] = useState<unknown>(null);
   // The Fluid skin shows the three right-edge panels as the tabs of
   // one shell; every other skin mounts them one at a time, as before.
   const { skin } = useSkin();
@@ -309,9 +322,13 @@ export function AppLayout() {
       }
       // Before the icons-only width, the button only hid the sidebar,
       // under this key: someone who hid it finds it hidden still.
-      return localStorage.getItem("waveflow.sidebar.hidden") === "1"
-        ? "hidden"
-        : "full";
+      if (localStorage.getItem("waveflow.sidebar.hidden") === "1") {
+        return "hidden";
+      }
+      // A tablet held upright has no room for the full sidebar next to
+      // the content; it starts on the icon rail until the user says
+      // otherwise.
+      return IS_ANDROID && window.innerWidth < 1000 ? "icons" : "full";
     } catch {
       return "full";
     }
@@ -330,7 +347,6 @@ export function AppLayout() {
       // Private mode / quota — UI still works for this session.
     }
   }, [sidebarMode]);
-  const isSidebarHidden = sidebarMode === "hidden";
 
   // First-run onboarding: prompt the user to point WaveFlow at a
   // music folder when no library has been populated yet.
@@ -532,6 +548,16 @@ export function AppLayout() {
 
   const currentEntry = viewHistory[historyIndex];
   const activeView: ViewId = currentEntry.id;
+  const drawerOpen = phone && drawerEntry === currentEntry;
+  const isSidebarHidden = phone ? !drawerOpen : sidebarMode === "hidden";
+  const closeDrawer = useCallback(() => setDrawerEntry(null), []);
+  const toggleDrawer = useCallback(
+    () =>
+      setDrawerEntry((open: unknown) =>
+        open === currentEntry ? null : currentEntry,
+      ),
+    [currentEntry],
+  );
   // Derived from the current history entry so back/forward restore the
   // correct payload. `null` for views without a payload.
   const activeAlbumId =
@@ -700,6 +726,60 @@ export function AppLayout() {
       index > 0 ? { history, index: index - 1 } : { history, index },
     );
   }, []);
+
+  // Android: the system Back gesture unwinds what is open, innermost
+  // first. Returning `false` tells the activity nothing was left, and it
+  // moves the app to the background (it is never finished: the engine
+  // lives in it).
+  useEffect(() => {
+    if (!IS_ANDROID) return;
+    window.__waveflowBack = () => {
+      const dialog = document.querySelector(
+        '[role="dialog"][aria-modal="true"], [role="menu"]',
+      );
+      if (dialog) {
+        (document.activeElement ?? document.body).dispatchEvent(
+          new KeyboardEvent("keydown", {
+            key: "Escape",
+            code: "Escape",
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+        return true;
+      }
+      if (immersiveOpen) {
+        closeImmersive();
+        return true;
+      }
+      if (drawerOpen) {
+        closeDrawer();
+        return true;
+      }
+      if (phone && activeRightPanel != null) {
+        closeRightPanel();
+        return true;
+      }
+      if (canGoBack) {
+        goBack();
+        return true;
+      }
+      return false;
+    };
+    return () => {
+      delete window.__waveflowBack;
+    };
+  }, [
+    immersiveOpen,
+    closeImmersive,
+    drawerOpen,
+    closeDrawer,
+    phone,
+    activeRightPanel,
+    closeRightPanel,
+    canGoBack,
+    goBack,
+  ]);
 
   const goForward = useCallback(() => {
     setNavState(({ history, index }) =>
@@ -1035,7 +1115,7 @@ export function AppLayout() {
           )}
 
           {/* Main Container */}
-          <div className="flex flex-1 overflow-hidden">
+          <div className="app-main-row relative flex flex-1 overflow-hidden">
             {/* Sidebar wrapper. Animates `width` between 0 and the
               Sidebar's intrinsic `w-64` (256 px) so the toggle
               actually frees the screen real estate instead of just
@@ -1060,13 +1140,26 @@ export function AppLayout() {
             <motion.div
               initial={false}
               animate={{
-                width: isSidebarHidden ? 0 : sidebarMode === "icons" ? 80 : 256,
+                width: phone
+                  ? 0
+                  : isSidebarHidden
+                    ? 0
+                    : sidebarMode === "icons"
+                      ? 80
+                      : 256,
               }}
               transition={{ duration: 0.22, ease: "easeOut" }}
-              className="skin-sidebar-shell shrink-0 overflow-hidden"
+              // On a phone the shell is a drawer over the content (see
+              // `android.css`), so it takes no width in the row.
+              className={`skin-sidebar-shell shrink-0 overflow-hidden ${
+                phone ? "mobile-drawer" : ""
+              }`}
+              data-open={phone && drawerOpen ? "" : undefined}
               // The skins narrow their padding on it: theirs is sized for
               // 256 px and would leave the icons no room at 80.
-              data-collapsed={sidebarMode === "icons" ? "" : undefined}
+              data-collapsed={
+                !phone && sidebarMode === "icons" ? "" : undefined
+              }
               aria-hidden={isSidebarHidden}
               inert={isSidebarHidden}
             >
@@ -1085,9 +1178,18 @@ export function AppLayout() {
                 navigateToAlbum={navigateToAlbum}
                 activeArtistId={activeArtistId}
                 navigateToArtist={navigateToArtist}
-                collapsed={sidebarMode === "icons"}
+                collapsed={!phone && sidebarMode === "icons"}
               />
             </motion.div>
+            {phone && drawerOpen && (
+              <button
+                type="button"
+                tabIndex={-1}
+                aria-label={t("common.close")}
+                className="mobile-drawer-backdrop"
+                onClick={closeDrawer}
+              />
+            )}
 
             {/* Center Content. `min-w-0` is required so a long playlist
               title or wide table doesn't blow the flex item's intrinsic
@@ -1112,7 +1214,7 @@ export function AppLayout() {
                 onGoBack={goBack}
                 onGoForward={goForward}
                 sidebarMode={sidebarMode}
-                onCycleSidebar={cycleSidebar}
+                onCycleSidebar={phone ? toggleDrawer : cycleSidebar}
                 whatsNewAvailable={whatsNew.release != null}
                 whatsNewUnseen={whatsNew.unseen}
                 onOpenWhatsNew={whatsNew.openPanel}
@@ -1206,7 +1308,17 @@ export function AppLayout() {
 
           {/* Bottom Player Bar */}
           <PlayerBar onNavigateToArtist={navigateToArtist} />
+          {phone && (
+            <MobileTabBar
+              activeView={activeView}
+              onNavigate={setActiveView}
+              menuOpen={drawerOpen}
+              onToggleMenu={toggleDrawer}
+            />
+          )}
         </div>
+
+        {IS_ANDROID && <PathPickerHost />}
 
         <ProfileSelectorModal
           isOpen={isProfileModalOpen}

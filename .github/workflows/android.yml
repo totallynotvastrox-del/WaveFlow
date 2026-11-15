@@ -84,28 +84,92 @@ jobs:
         run: |
           flag=""
           if [ "$PROFILE" = "debug" ]; then flag="--debug"; fi
-          bunx tauri android build --apk --target aarch64 --ci $flag
+          # arm64 is what gets installed; x86_64 is what the emulator
+          # below runs, so the same build is the one that is tested.
+          bunx tauri android build --apk --split-per-abi --target aarch64 --target x86_64 --ci $flag
 
       - name: Sign
         run: |
           tools="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
-          apk="$(find src-tauri/crates/app/gen/android/app/build/outputs/apk -name '*.apk' | head -1)"
-          test -n "$apk"
-          "$tools/zipalign" -f -p 4 "$apk" aligned.apk
-          "$tools/apksigner" sign \
-            --ks src-tauri/crates/app/android/sideload.keystore \
-            --ks-key-alias waveflow \
-            --ks-pass pass:waveflow-sideload \
-            --out WaveFlow-android-arm64.apk aligned.apk
+          find src-tauri/crates/app/gen/android/app/build/outputs/apk -name '*.apk'
+          for abi in arm64 x86_64; do
+            apk="$(find src-tauri/crates/app/gen/android/app/build/outputs/apk -name "*${abi}*.apk" | head -1)"
+            test -n "$apk"
+            "$tools/zipalign" -f -p 4 "$apk" aligned.apk
+            "$tools/apksigner" sign \
+              --ks src-tauri/crates/app/android/sideload.keystore \
+              --ks-key-alias waveflow \
+              --ks-pass pass:waveflow-sideload \
+              --out "WaveFlow-android-${abi}.apk" aligned.apk
+          done
           "$tools/apksigner" verify --print-certs WaveFlow-android-arm64.apk | head -3
-          "$tools/aapt2" dump badging WaveFlow-android-arm64.apk | head -30
-          ls -la WaveFlow-android-arm64.apk
-          unzip -l WaveFlow-android-arm64.apk | grep -E '\.so$|classes.*dex' || true
+          "$tools/aapt2" dump badging WaveFlow-android-arm64.apk | head -12
+          ls -la WaveFlow-android-*.apk
+          unzip -l WaveFlow-android-arm64.apk | grep -E '\.so$' || true
 
       - uses: actions/upload-artifact@v4
         with:
           name: WaveFlow-android-arm64-${{ env.PROFILE }}
           path: WaveFlow-android-arm64.apk
+
+      - name: Test tracks
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
+          mkdir -p testmusic
+          n=0
+          for album in "First Light" "Second Wind"; do
+            for t in 1 2 3; do
+              n=$((n+1))
+              ffmpeg -loglevel error -f lavfi -i "sine=frequency=$((220+n*55)):duration=40" \
+                -metadata title="Smoke Track $n" -metadata artist="The Testers" \
+                -metadata album="$album" -metadata track="$t" -metadata date="2024" -metadata genre="Test" \
+                "testmusic/$(printf '%02d' $n) - Smoke Track $n.flac"
+            done
+          done
+          ffmpeg -loglevel error -f lavfi -i "sine=frequency=660:duration=40" -b:a 192k \
+            -metadata title="Lossy Seven" -metadata artist="Another Artist" -metadata album="Singles" \
+            "testmusic/07 - Lossy Seven.mp3"
+          ls -la testmusic
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run on a phone emulator
+        id: phone
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim
+          script: bash scripts/android/smoke.sh WaveFlow-android-x86_64.apk scripts/android/smoke-phone.steps smoke/phone
+
+      - name: Publish the screenshots
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test -d smoke || exit 0
+          mkdir pub && cd pub
+          git init -q -b android-smoke
+          cp -r ../smoke/. .
+          find . -name logcat.txt -delete
+          git add -A
+          git -c user.name="github-actions" -c user.email="actions@github.com" commit -q -m "smoke: ${GITHUB_SHA::7} ($PROFILE)"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" android-smoke
+
+      - name: Smoke test verdict
+        if: steps.phone.outcome == 'failure'
+        run: |
+          echo "the emulator run failed; see its log and the android-smoke branch"
+          exit 1
 
       - name: Publish as the android-latest pre-release
         if: env.PROFILE == 'release'

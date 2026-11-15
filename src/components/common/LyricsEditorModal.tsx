@@ -17,7 +17,7 @@ import {
   X,
   AlertTriangle,
 } from "lucide-react";
-import { save as showSaveDialog } from "@tauri-apps/plugin-dialog";
+import { save as showSaveDialog } from "../../lib/tauri/nativeDialog";
 import { usePlayer } from "../../hooks/usePlayer";
 import { useModalA11y } from "../../hooks/useModalA11y";
 import { usePlaybackClock } from "../../hooks/usePlaybackClock";

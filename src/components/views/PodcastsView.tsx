@@ -12,7 +12,7 @@ import { useTranslation } from "react-i18next";
 import {
   open as showOpenDialog,
   save as showSaveDialog,
-} from "@tauri-apps/plugin-dialog";
+} from "../../lib/tauri/nativeDialog";
 import {
   Download,
   Loader2,

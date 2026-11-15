@@ -1,0 +1,7 @@
+# First launch on a phone-sized emulator.
+wait 25
+shot 01-launch
+dump 01-launch
+wait 20
+shot 02-settled
+dump 02-settled
