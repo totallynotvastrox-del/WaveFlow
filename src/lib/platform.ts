@@ -108,6 +108,37 @@ export function initPlatform(): void {
   document.documentElement.dataset.device = current;
   if (!IS_ANDROID) return;
   window.addEventListener("resize", apply);
+  followTheme();
+}
+
+/**
+ * Keep the system bars in the theme's colour. The activity draws the
+ * strip behind the status and navigation bars itself; it is told the
+ * page's ambient colour whenever the theme or the skin changes.
+ */
+function followTheme(): void {
+  let last = "";
+  const push = () => {
+    const bridge = androidBridge();
+    if (!bridge?.setChrome) return;
+    const root = document.documentElement;
+    const color =
+      getComputedStyle(root).getPropertyValue("--ambient-bg").trim() ||
+      "#121212";
+    const hex = /^#[0-9a-f]{6}$/i.test(color) ? color : "#121212";
+    // Perceived lightness decides whether the bar icons are dark or light.
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+    const light = 0.299 * r + 0.587 * g + 0.114 * b > 150;
+    const key = `${hex}:${light}`;
+    if (key === last) return;
+    last = key;
+    bridge.setChrome(hex, light);
+  };
+  new MutationObserver(push).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class", "style", "data-skin", "data-theme"],
+  });
+  push();
 }
 
 export function getDeviceMode(): DeviceMode {

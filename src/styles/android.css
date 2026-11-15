@@ -144,14 +144,24 @@ html[data-device="phone"] .mobile-tab-bar button {
 
 /* ---------- phone: dialogs ---------- */
 
-html[data-device="phone"] [role="dialog"][aria-modal="true"] {
+/* Dialogs that are cards over a backdrop; the ones that already fill
+   the screen (`inset-0`: the full-screen player, the viewers) are left. */
+html[data-device="phone"] [role="dialog"][aria-modal="true"]:not(.inset-0) {
   max-width: calc(100vw - 1rem) !important;
   max-height: calc(100dvh - 1.5rem) !important;
 }
 
 html[data-device="phone"]
-  [role="dialog"][aria-modal="true"]:not(.android-sheet) {
+  [role="dialog"][aria-modal="true"]:not(.inset-0):not(.android-sheet) {
   overflow-y: auto;
+}
+
+/* ---------- phone: the full-screen player ---------- */
+
+/* The hardware keys set the volume; the slider's room goes to the
+   transport. */
+html[data-device="phone"] [data-immersive] [data-volume-control] {
+  display: none !important;
 }
 
 /* ---------- phone: the top bar ---------- */
@@ -200,4 +210,20 @@ html[data-device="phone"] [data-topbar-search] [data-topbar-popover] {
   margin-top: 0.25rem;
   max-height: calc(100dvh - 12rem);
   overflow-y: auto;
+}
+
+/* ---------- settings with no Android counterpart ---------- */
+
+/* Start with the system and the tray, the floating lyrics window,
+   system-wide hot keys and the self-updater: each needs something only a
+   desktop has (see `src-tauri/crates/app/src/android/`). */
+html[data-device="phone"] #settings-group-startup,
+html[data-device="tablet"] #settings-group-startup,
+html[data-device="phone"] #settings-group-desktopLyrics,
+html[data-device="tablet"] #settings-group-desktopLyrics,
+html[data-device="phone"] #settings-group-globalShortcuts,
+html[data-device="tablet"] #settings-group-globalShortcuts,
+html[data-device="phone"] #settings-group-updates,
+html[data-device="tablet"] #settings-group-updates {
+  display: none !important;
 }

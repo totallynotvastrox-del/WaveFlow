@@ -1,3 +1,5 @@
+import { IS_ANDROID } from "../../../../lib/platform";
+import { DeviceLayoutCard } from "../DeviceLayoutCard";
 import { useTranslation } from "react-i18next";
 import {
   UI_ZOOM_MAX,
@@ -116,10 +118,16 @@ export function AppearanceSection({
         <ScrollTitlesCard />
       </SettingsGroup>
       <SettingsGroup id="window" reveal={targetGroup === "window"}>
-        <WindowBoundsCard />
-        <MiniPlayerBoundsCard />
-        <WindowChromeCard />
-        <XwaylandCard />
+        {IS_ANDROID ? (
+          <DeviceLayoutCard />
+        ) : (
+          <>
+            <WindowBoundsCard />
+            <MiniPlayerBoundsCard />
+            <WindowChromeCard />
+            <XwaylandCard />
+          </>
+        )}
       </SettingsGroup>
       <SettingsGroup id="immersive" reveal={targetGroup === "immersive"}>
         <ImmersiveViewCard />

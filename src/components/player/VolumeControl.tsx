@@ -98,7 +98,11 @@ export function VolumeControl() {
 
   return (
     <>
-      <div ref={wheelHostRef} className="flex items-center space-x-2 w-32">
+      <div
+        ref={wheelHostRef}
+        data-volume-control
+        className="flex items-center space-x-2 w-32"
+      >
         <button
           type="button"
           onClick={toggleMute}

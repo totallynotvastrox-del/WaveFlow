@@ -16,6 +16,7 @@ import type { DsdPrecisionTaps, ReplayGainMode } from "./tauri/player";
 import type { ShortcutAction } from "./shortcuts";
 import type { GlobalShortcutAction } from "./tauri/globalShortcuts";
 import type { UpdateChannel } from "./tauri/updater";
+import { IS_ANDROID } from "./platform";
 
 /**
  * Where a preference is kept.
@@ -110,11 +111,13 @@ export const SETTINGS = {
     false,
     "settings.integrations.notifications.title",
   ),
+  // A tap plays on a touch screen: a double tap is a desktop gesture, and
+  // the Android build starts with the setting on.
   "ui.single_click_play": setting(
     "general",
     "profile",
     "bool",
-    false,
+    IS_ANDROID,
     "settings.singleClickPlay.title",
   ),
   "playback.autoplay": setting(
